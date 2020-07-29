@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SMRC-JS Engine Test</title>
+    <meta charset="utf-8">
+    <style>
+      body {
+        padding: 3rem 1.5rem 1.5rem 1rem;
+      }
+      #upload-file {
+        width: 15rem;
+        height: 5rem;
+      }
+      .button-group>button {
+        width: 8rem;
+        height: 3.5rem;
+        font-size: 1.5rem;
+        margin-bottom: 3rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <label for="upload-file">오디오 파일 업로드 : </label>
+    <input type="file" id="upload-file" accept="audio/*">
+    <br>
+    <div class="button-group">
+      <button id="btn submit", onclick="clickButton()">실행</button>
+      <button id="btn play", onclick="playPause(true)">재생</button>
+      <button id="btn pause", onclick="playPause(false)">정지</button>
+    </div>
+    <br>
+    <audio id="processed-audio" controls></audio><p>
+    <input type="range" id="slider" min="0" max="1" step = "0.01" value="0.5" onchange="setGain()">
+
+
+<!-- 여기서부터 JS script -->
+    <script>
+      let audioFile = '';
+      let audioSource = '';
+      let filter ='';
+      let gainV = 0.5;
+      let audioCtx ='';
+
+      const fileInput = document.getElementById('upload-file')
+      fileInput.onchange = function (event) {
+        const fileList = fileInput.files
+        audioFile = fileList[0]
+      }
+
+
+      function audioProcess (audioElem) {
+
+        console.log('start audio process')
+        const MyAudioContext = new (window.AudioContext || window.webkitAudioContext) ()
+        const audioContext = MyAudioContext
+
+        const audioCtxSource = audioContext.createMediaElementSource(audioElem)
+        const volume = audioContext.createGain()
+        var convolver = audioContext.createConvolver();
+
+        var soundSource, concertHallBuffer;
+
+        ajaxRequest = new XMLHttpRequest();
+        ajaxRequest.open('GET', 'https://storage.googleapis.com/smrc/ir.wav', true);
+        ajaxRequest.responseType = 'arraybuffer';
+
+        ajaxRequest.onload = function() {
+        var audioData = ajaxRequest.response;
+        audioContext.decodeAudioData(audioData, function(buffer) {
+            concertHallBuffer = buffer;
+            soundSource = audioCtx.createBufferSource();
+            soundSource.buffer = concertHallBuffer;
+            }, function(e){"Error with decoding audio data" + e.err});
+        }
+
+        ajaxRequest.send();
+
+        convolver.buffer = concertHallBuffer;
+
+        audioCtxSource.connect(convolver)
+        convolver.connect(audioContext.destination)
+
+        filter = volume
+        audioCtx = audioContext
+        volume.gain.setValueAtTime(gainV, audioCtx.currentTime)
+
+      }
+
+      function setGain() {
+        gainV = slider.value;
+        filter.gain.setValueAtTime(gainV, audioCtx.currentTime)
+        console.log(gainV);
+
+      }
+
+      function setAudioElement (audioFile) {
+        const audioElem = document.getElementById('processed-audio')
+        if (audioElem.childNodes.length > 0) {
+          audioElem.removeChild(audioElem.childNodes[0])
+        }
+        audioElem.load()
+        const mediaURL = URL.createObjectURL(audioFile)
+        const sourceElem = document.createElement('source')
+        sourceElem.src = mediaURL
+        audioElem.appendChild(sourceElem)
+        audioElem.load()
+        URL.revokeObjectURL(audioFile)
+
+        return audioElem
+      }
+
+      function clickButton () {
+        const audioElem = setAudioElement(audioFile)
+        audioProcess(audioElem)
+      }
+
+      function playPause (value) {
+        const audioElem = document.getElementById('processed-audio')
+        if (value === true) {
+          audioElem.play()
+        } else {
+          audioElem.pause()
+        }
+      }
+    
+
+    </script>
+  </body>
+</html>
