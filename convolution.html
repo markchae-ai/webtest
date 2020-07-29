@@ -59,7 +59,7 @@
         const volume = audioContext.createGain()
         var convolver = audioContext.createConvolver();
         var irRRequest = new XMLHttpRequest();
-        irRRequest.open("GET", "ir.wav", true);
+        irRRequest.open("GET", "https://markchae-ai.github.io/webtest/ir.wav", true);
         irRRequest.responseType = "arraybuffer";
         irRRequest.onload = function() {
             context.decodeAudioData( irRRequest.response, 
