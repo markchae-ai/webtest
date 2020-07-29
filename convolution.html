@@ -62,7 +62,7 @@
         irRRequest.open("GET", "https://markchae-ai.github.io/webtest/ir.wav", true);
         irRRequest.responseType = "arraybuffer";
         irRRequest.onload = function() {
-            context.decodeAudioData( irRRequest.response, 
+            audioContext.decodeAudioData( irRRequest.response, 
                 function(buffer) { convolver.buffer = buffer; } );
         }
         irRRequest.send();
